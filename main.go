@@ -72,7 +72,13 @@ func userInput(t *throttle.Throttle) error {
 			t.ToggleFunction(9)
 		default:
 			if key == keyboard.KeyArrowUp {
-				// do things
+				t.ThrottleUp()
+			} else if key == keyboard.KeyArrowDown {
+				t.ThrottleDown()
+			} else if key == keyboard.KeyArrowRight {
+				t.DirectionPositive()
+			} else if key == keyboard.KeyArrowLeft {
+				t.DirectionZero()
 			} else if key == keyboard.KeyCtrlC {
 				return nil
 			} else {

@@ -7,6 +7,8 @@ import (
 	"sync"
 )
 
+const maxSpeed = 127
+
 type Throttle struct {
 	serial  io.ReadWriter
 	address int
@@ -14,6 +16,8 @@ type Throttle struct {
 	mu        sync.Mutex
 	power     bool
 	functions map[int]bool
+	speed     int
+	direction int
 }
 
 func New(address int, serial io.ReadWriter) *Throttle {
@@ -48,6 +52,40 @@ func (t *Throttle) PowerOff() error {
 
 	t.power = false
 	return t.writeString("<0>")
+}
+
+func (t *Throttle) DirectionPositive() error {
+	t.direction = 1
+	throttlestring := fmt.Sprintf("<t 1 %d %d %d>", t.address, t.speed, t.direction)
+	log.Printf("speed set to %d", t.speed)
+	return t.writeString(throttlestring)
+}
+
+func (t *Throttle) DirectionZero() error {
+	t.direction = 0
+	throttlestring := fmt.Sprintf("<t 1 %d %d %d>", t.address, t.speed, t.direction)
+	log.Printf("speed set to %d", t.speed)
+	return t.writeString(throttlestring)
+}
+
+func (t *Throttle) ThrottleDown() error {
+	t.speed -= 1
+	if t.speed < 0 {
+		t.speed = 0
+	}
+	throttlestring := fmt.Sprintf("<t 1 %d %d %d>", t.address, t.speed, t.direction)
+	log.Printf("speed set to %d", t.speed)
+	return t.writeString(throttlestring)
+}
+
+func (t *Throttle) ThrottleUp() error {
+	t.speed += 1
+	if t.speed > maxSpeed {
+		t.speed = maxSpeed
+	}
+	throttlestring := fmt.Sprintf("<t 1 %d %d %d>", t.address, t.speed, t.direction)
+	log.Printf("speed set to %d", t.speed)
+	return t.writeString(throttlestring)
 }
 
 func (t *Throttle) ToggleFunction(f int) error {
