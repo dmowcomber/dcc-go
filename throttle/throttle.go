@@ -1,16 +1,17 @@
 package throttle
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"log"
+	"sync"
 )
 
 type Throttle struct {
 	serial  io.ReadWriter
 	address int
 
+	mu        sync.Mutex
 	power     bool
 	functions map[int]bool
 }
@@ -23,37 +24,61 @@ func New(address int, serial io.ReadWriter) *Throttle {
 	}
 }
 func (t *Throttle) PowerToggle() error {
-	if t.power {
+	t.mu.Lock()
+	power := t.power
+	t.mu.Unlock()
+
+	if power {
 		return t.PowerOff()
 	}
 	return t.PowerOn()
 }
 
 func (t *Throttle) PowerOn() error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	t.power = true
-	return t.write([]byte("<1>"))
+	return t.writeString("<1>")
 }
 
 func (t *Throttle) PowerOff() error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	t.power = false
-	return t.write([]byte("<0>"))
+	return t.writeString("<0>")
 }
 
 func (t *Throttle) ToggleFunction(f int) error {
-	if f != 8 {
-		return errors.New("not implemented yet")
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	t.toggleFunctionValue(f)
+
+	var functionData int
+	if f <= 4 {
+		functionData = 128 + t.getFunctionValue(0)*16 + t.getFunctionValue(1)*1 + t.getFunctionValue(2)*2 + t.getFunctionValue(3)*4 + t.getFunctionValue(4)*8
+	} else if f <= 8 {
+		functionData = 176 + t.getFunctionValue(5)*1 + t.getFunctionValue(6)*2 + t.getFunctionValue(7)*4 + t.getFunctionValue(8)*8
+	} else {
+		return fmt.Errorf("function %d not implemented yet", f)
 	}
 
-	t.functions[f] = !t.functions[f]
-	functionIsOn := boolToInt(t.functions[f])
-
-	functionValue := 176 + (functionIsOn * 8)
-	s := fmt.Sprintf("<f %d %d>", t.address, functionValue)
+	s := fmt.Sprintf("<f %d %d>", t.address, functionData)
 	return t.writeString(s)
 }
 
-func boolToInt(b bool) int {
-	if b {
+func (t *Throttle) getFunctionValue(f int) int {
+	if t.functions[f] {
+		return 1
+	}
+	return 0
+}
+
+func (t *Throttle) toggleFunctionValue(f int) int {
+	t.functions[f] = !t.functions[f]
+	if t.functions[f] {
 		return 1
 	}
 	return 0

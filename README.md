@@ -1,7 +1,8 @@
 # WARNING
 
 dcc-go is alpha quality software at this time. Although it works, it has not
-been tested with any commercial DCC system. It has only been tested with DCC++ on an Arduino Uno.
+been tested with any commercial DCC system.
+It has only been tested with DCC++ on an Arduino Uno using an ESU Loksound decoder.
 The author of dcc-go claims no responsibility or liability for any damage to your system,
 equipment or trains.
 
