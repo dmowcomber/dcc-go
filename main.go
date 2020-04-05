@@ -26,6 +26,7 @@ func main() {
 	defer func() {
 		log.Println("powering off")
 		time.Sleep(300 * time.Millisecond)
+		throttle.Stop()
 		throttle.PowerOff()
 	}()
 
@@ -52,6 +53,10 @@ func userInput(t *throttle.Throttle) error {
 		switch char {
 		case 'p':
 			t.PowerToggle()
+		case 's':
+			t.Stop()
+		case '0':
+			t.ToggleFunction(0)
 		case '1':
 			t.ToggleFunction(1)
 		case '2', 'h':
@@ -76,9 +81,9 @@ func userInput(t *throttle.Throttle) error {
 			} else if key == keyboard.KeyArrowDown {
 				t.ThrottleDown()
 			} else if key == keyboard.KeyArrowRight {
-				t.DirectionPositive()
+				t.DirectionForward()
 			} else if key == keyboard.KeyArrowLeft {
-				t.DirectionZero()
+				t.DirectionBackward()
 			} else if key == keyboard.KeyCtrlC {
 				return nil
 			} else {

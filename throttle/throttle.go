@@ -54,18 +54,16 @@ func (t *Throttle) PowerOff() error {
 	return t.writeString("<0>")
 }
 
-func (t *Throttle) DirectionPositive() error {
+func (t *Throttle) DirectionForward() error {
+	// TODO: add locking to all of these speed and direction function
 	t.direction = 1
-	throttlestring := fmt.Sprintf("<t 1 %d %d %d>", t.address, t.speed, t.direction)
-	log.Printf("speed set to %d", t.speed)
-	return t.writeString(throttlestring)
+	// TODO: reuse this part instead of writing it 4 separate times
+	return t.writeSpeedAndDirection()
 }
 
-func (t *Throttle) DirectionZero() error {
+func (t *Throttle) DirectionBackward() error {
 	t.direction = 0
-	throttlestring := fmt.Sprintf("<t 1 %d %d %d>", t.address, t.speed, t.direction)
-	log.Printf("speed set to %d", t.speed)
-	return t.writeString(throttlestring)
+	return t.writeSpeedAndDirection()
 }
 
 func (t *Throttle) ThrottleDown() error {
@@ -73,9 +71,7 @@ func (t *Throttle) ThrottleDown() error {
 	if t.speed < 0 {
 		t.speed = 0
 	}
-	throttlestring := fmt.Sprintf("<t 1 %d %d %d>", t.address, t.speed, t.direction)
-	log.Printf("speed set to %d", t.speed)
-	return t.writeString(throttlestring)
+	return t.writeSpeedAndDirection()
 }
 
 func (t *Throttle) ThrottleUp() error {
@@ -83,8 +79,17 @@ func (t *Throttle) ThrottleUp() error {
 	if t.speed > maxSpeed {
 		t.speed = maxSpeed
 	}
+	return t.writeSpeedAndDirection()
+}
+
+func (t *Throttle) Stop() error {
+	t.speed = 0
+	return t.writeSpeedAndDirection()
+}
+
+func (t *Throttle) writeSpeedAndDirection() error {
 	throttlestring := fmt.Sprintf("<t 1 %d %d %d>", t.address, t.speed, t.direction)
-	log.Printf("speed set to %d", t.speed)
+	log.Printf("setting speed to %d and direction to %d\n", t.speed, t.direction)
 	return t.writeString(throttlestring)
 }
 
