@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 
-	throttle "./throttle" // TODO: should be "github.com/dmowcomber/dcc-go/throttle"
+	"github.com/dmowcomber/dcc-go/throttle"
 	"github.com/eiannone/keyboard"
 	"github.com/tarm/serial"
 )

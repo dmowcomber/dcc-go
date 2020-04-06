@@ -15,7 +15,7 @@ type Throttle struct {
 
 	mu        sync.Mutex
 	power     bool
-	functions map[int]bool
+	functions map[uint]bool
 	speed     int
 	direction int
 }
@@ -24,7 +24,7 @@ func New(address int, serial io.ReadWriter) *Throttle {
 	return &Throttle{
 		address:   address,
 		serial:    serial,
-		functions: make(map[int]bool),
+		functions: make(map[uint]bool),
 	}
 }
 func (t *Throttle) PowerToggle() error {
@@ -93,38 +93,48 @@ func (t *Throttle) writeSpeedAndDirection() error {
 	return t.writeString(throttlestring)
 }
 
-func (t *Throttle) ToggleFunction(f int) error {
+func (t *Throttle) ToggleFunction(f uint) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
 	t.toggleFunctionValue(f)
 
-	var functionData int
+	var functionData uint
 	if f <= 4 {
 		functionData = 128 + t.getFunctionValue(0)*16 + t.getFunctionValue(1)*1 + t.getFunctionValue(2)*2 + t.getFunctionValue(3)*4 + t.getFunctionValue(4)*8
 	} else if f <= 8 {
 		functionData = 176 + t.getFunctionValue(5)*1 + t.getFunctionValue(6)*2 + t.getFunctionValue(7)*4 + t.getFunctionValue(8)*8
+	} else if f <= 12 {
+		functionData = 160 + t.getFunctionValue(9)*1 + t.getFunctionValue(10)*2 + t.getFunctionValue(11)*4 + t.getFunctionValue(12)*8
+	} else if f <= 20 {
+		for i := uint(0); i < 8; i++ {
+			functionData += t.getFunctionValue(13+i) << i
+		}
+		s := fmt.Sprintf("<f %d 222 %d>", t.address, functionData)
+		return t.writeString(s)
+	} else if f <= 28 {
+		for i := uint(0); i < 8; i++ {
+			functionData += t.getFunctionValue(21+i) << i
+		}
+		s := fmt.Sprintf("<f %d 223 %d>", t.address, functionData)
+		return t.writeString(s)
 	} else {
-		return fmt.Errorf("function %d not implemented yet", f)
+		return fmt.Errorf("unknown function %d", f)
 	}
 
 	s := fmt.Sprintf("<f %d %d>", t.address, functionData)
 	return t.writeString(s)
 }
 
-func (t *Throttle) getFunctionValue(f int) int {
+func (t *Throttle) getFunctionValue(f uint) uint {
 	if t.functions[f] {
 		return 1
 	}
 	return 0
 }
 
-func (t *Throttle) toggleFunctionValue(f int) int {
+func (t *Throttle) toggleFunctionValue(f uint) {
 	t.functions[f] = !t.functions[f]
-	if t.functions[f] {
-		return 1
-	}
-	return 0
 }
 
 func (t *Throttle) writeString(s string) error {
