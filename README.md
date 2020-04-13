@@ -6,8 +6,11 @@ A command line DCC Throttle to control your model trains written in Golang. Insp
 # install
 go get github.com/dmowcomber/dcc-go
 
-# run
+# run with default address 3 and default device /dev/ttyACM0
 dcc-go
+
+# run with overridden address and usb device
+dcc-go -address=3 -device=/dev/ttyACM0
 ```
 
 # WARNING
