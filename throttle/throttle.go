@@ -42,15 +42,15 @@ func (t *Throttle) Reset() error {
 	return t.writeSpeedAndDirection()
 }
 
-func (t *Throttle) PowerToggle() error {
+func (t *Throttle) PowerToggle() (bool, error) {
 	t.mu.Lock()
 	power := t.power
 	t.mu.Unlock()
 
 	if power {
-		return t.PowerOff()
+		return false, t.PowerOff()
 	}
-	return t.PowerOn()
+	return true, t.PowerOn()
 }
 
 func (t *Throttle) PowerOn() error {
@@ -104,6 +104,16 @@ func (t *Throttle) ThrottleUp() error {
 	return t.writeSpeedAndDirection()
 }
 
+func (t *Throttle) SetSpeed(speed int) error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if speed > maxSpeed {
+		speed = maxSpeed
+	}
+	t.speed = speed
+	return t.writeSpeedAndDirection()
+}
+
 func (t *Throttle) Stop() error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -117,10 +127,11 @@ func (t *Throttle) writeSpeedAndDirection() error {
 	return t.writeString(throttlestring)
 }
 
-func (t *Throttle) ToggleFunction(f uint) error {
+func (t *Throttle) ToggleFunction(f uint) (bool, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.functions[f] = !t.functions[f]
+	funcValue := t.functions[f]
 	var functionData uint
 
 	// handle functions 12 and below
@@ -133,7 +144,7 @@ func (t *Throttle) ToggleFunction(f uint) error {
 			functionData = 160 + t.getFunctionValue(9)*1 + t.getFunctionValue(10)*2 + t.getFunctionValue(11)*4 + t.getFunctionValue(12)*8
 		}
 		s := fmt.Sprintf("<f %d %d>", t.address, functionData)
-		return t.writeString(s)
+		return funcValue, t.writeString(s)
 	}
 
 	// handle remaining functions
@@ -149,10 +160,10 @@ func (t *Throttle) ToggleFunction(f uint) error {
 			functionData += t.getFunctionValue(21+i) << i
 		}
 	} else {
-		return fmt.Errorf("unknown function %d", f)
+		return funcValue, fmt.Errorf("unknown function %d", f)
 	}
 	s := fmt.Sprintf("<f %d %d %d>", t.address, functionPrefix, functionData)
-	return t.writeString(s)
+	return funcValue, t.writeString(s)
 
 }
 

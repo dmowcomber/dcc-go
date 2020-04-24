@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/js/bootstrap.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js'></script>
+    <script type='text/javascript' src='script.js'></script>
+
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-beta.2/css/bootstrap.css' rel='stylesheet' />
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css' rel='stylesheet' />
+    <link rel='stylesheet' type='text/css' href='style.css'>
+  </head>
+  <body>
+   <div class='container'>
+     <div id='throttle' class='throttle w3-container'>
+        <h2>Throttle</h2>
+        <!-- Locomotive Address
+        <input id='locomotive-address' class='input-box text-right' value='3'> -->
+        <!-- <br /> -->
+        <!-- <br /> -->
+
+
+        <div class='w3-row'>
+          <div class='w3-third btn-container'>
+            <button class='btn' value='power'>power</button>
+          </div>
+          <div class='w3-third btn-container'>
+            <button class='btn' value='stop'>stop</button>
+          </div>
+          <div class='w3-third btn-container'>
+            <button class='btn' value='0'>lights</button>
+          </div>
+       </div>
+
+       Speed
+       <!-- <button value='-'>-</button>
+       <button value='+'>+</button> -->
+       <div class='w3-row'>
+         <input id='speed-input-box' class='input-box text-right' value='0'>
+       </div>
+
+       <!-- Status
+       <input id='input-output-box' class='input-box text-right' value='0'> -->
+
+        <div class='w3-row'>
+          <div class='w3-quarter btn-container'><button value='backward' id='backward'>backward</button></div>
+          <div class='w3-quarter btn-container'><button value='forward' id='forward'>forward</button></div>
+          <div class='w3-quarter btn-container'><button value='-'>-</button></div>
+          <div class='w3-quarter btn-container'><button value='+'>+</button></div>
+       </div>
+
+       <div id='functions'></div>
+     </div>
+   </div>
+  </body>
+</html>

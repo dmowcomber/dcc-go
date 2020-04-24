@@ -3,9 +3,12 @@ package main
 import (
 	"flag"
 	"log"
-	"time"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/dmowcomber/dcc-go/throttle"
+	"github.com/dmowcomber/dcc-go/ui/api"
 	"github.com/dmowcomber/dcc-go/ui/cli"
 	"github.com/tarm/serial"
 )
@@ -31,15 +34,46 @@ func main() {
 	}
 	log.Println("connected")
 
-	throttle := throttle.New(address, serialWriter)
-	defer func() {
-		log.Println("powering off")
-		time.Sleep(300 * time.Millisecond)
-		throttle.Stop()
-		throttle.PowerOff()
-	}()
+	throt := throttle.New(address, serialWriter)
+
+	throttleCLI := cli.New(throt)
+
+	port := 8080
+	apiServer := api.New(throt, port)
+
+	go signalWatcher(throt, apiServer, throttleCLI)
 
 	// run the cli
-	throttleCLI := cli.New(throttle)
-	throttleCLI.Run()
+	go throttleCLI.Run()
+
+	// run api server
+	err = apiServer.Run()
+	if err != nil {
+		log.Fatalf("unable to start the api: %q", err.Error())
+	}
+}
+
+// signalWatcher waits for a signal (control-c or kill -9).
+// on SIGINT or SIGTERM it shuts everything down.
+func signalWatcher(throt *throttle.Throttle, apiServer *api.API, throttleCLI *cli.CLI) {
+	exitCode := 0
+	defer func() {
+		log.Println("powering off throttle")
+		throt.PowerOff()
+		os.Exit(exitCode)
+	}()
+
+	// wait for signal
+	shutdownSignal := make(chan os.Signal, 1)
+	signal.Notify(shutdownSignal, syscall.SIGINT, syscall.SIGTERM)
+	sig := <-shutdownSignal
+
+	log.Printf("received signal to shutdown: %s\n", sig)
+	err := apiServer.Shutdown()
+	if err != nil {
+		log.Printf("failed to stop api: %q\n", err.Error())
+		exitCode = 1
+		return
+	}
+	log.Println("api successfully stopped")
 }
