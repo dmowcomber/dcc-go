@@ -1,0 +1,11 @@
+version: '2'
+services:
+  dcc-go:
+    build: .
+    network_mode: "host"
+    restart: always
+    
+    # needed to access the usb device
+    privileged: true
+    volumes:
+      - "/dev/ttyACM0:/dev/ttyACM0"

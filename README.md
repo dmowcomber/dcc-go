@@ -2,6 +2,7 @@
 A command line DCC Throttle to control your model trains written in Golang. Inspired by [DCCute](https://github.com/deltaray/DCCute)
 
 # Installation
+## Install binary and run
 ```
 # install
 go get github.com/dmowcomber/dcc-go
@@ -12,6 +13,12 @@ dcc-go
 # run with overridden address and usb device
 dcc-go -address=3 -device=/dev/ttyACM0
 ```
+
+## Build docker image and run in docker
+```
+docker-compose up -d
+```
+
 
 # WARNING
 
