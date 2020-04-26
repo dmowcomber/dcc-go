@@ -1,5 +1,10 @@
 # dcc-go
-A command line DCC Throttle to control your model trains written in Golang. Inspired by [DCCute](https://github.com/deltaray/DCCute)
+A DCC Throttle to control model trains. Inspired by [DCCute](https://github.com/deltaray/DCCute)
+
+This repo contains:
+* A Golang DCC Throttle library [github.com/dmowcomber/dcc-go/throttle](http://github.com/dmowcomber/dcc-go/blob/master/throttle/throttle.go)
+* A DCC Throttle HTTP API
+* A DCC Throttle Web page
 
 # Installation
 ## Install binary and run
@@ -19,6 +24,8 @@ dcc-go -address=3 -device=/dev/ttyACM0
 docker-compose up -d
 ```
 
+# Screenshot
+![GitHub Logo](/screenshot.png)
 
 # WARNING
 
