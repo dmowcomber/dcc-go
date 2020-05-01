@@ -2,14 +2,18 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/dmowcomber/dcc-go/roster"
 	"github.com/dmowcomber/dcc-go/throttle"
 	"github.com/dmowcomber/dcc-go/ui/api"
 	"github.com/dmowcomber/dcc-go/ui/cli"
+	"github.com/go-chi/chi"
 	"github.com/tarm/serial"
 )
 
@@ -34,13 +38,16 @@ func main() {
 	}
 	log.Println("connected")
 
-	throt := throttle.New(address, serialWriter)
-
-	throttleCLI := cli.New(throt)
-
 	port := 8080
-	apiServer := api.New(throt, port)
+	router := chi.NewRouter()
+	addr := fmt.Sprintf(":%d", port)
+	httpServer := &http.Server{Addr: addr, Handler: router}
 
+	throttleRoster := roster.New(serialWriter)
+	apiServer := api.New(throttleRoster, router, httpServer)
+
+	throt := throttle.New(address, serialWriter)
+	throttleCLI := cli.New(throt)
 	go signalWatcher(throt, apiServer, throttleCLI)
 
 	// run the cli

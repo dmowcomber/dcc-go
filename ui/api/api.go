@@ -7,32 +7,37 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/dmowcomber/dcc-go/throttle"
+	"github.com/dmowcomber/dcc-go/roster"
+	"github.com/go-chi/chi"
 )
 
 type API struct {
-	throt *throttle.Throttle
-
+	roster     *roster.Roster
+	router     chi.Router
 	httpServer *http.Server
 }
 
-func New(throt *throttle.Throttle, port int) *API {
-	addr := fmt.Sprintf(":%d", port)
-	httpServer := &http.Server{
-		Addr: addr,
-	}
+func New(roster *roster.Roster, router chi.Router, httpServer *http.Server) *API {
 	return &API{
-		throt:      throt,
+		roster:     roster,
+		router:     router,
 		httpServer: httpServer,
 	}
 }
 
+const defaultLocomotiveAddress = 3
+
 func (a *API) Run() error {
-	http.HandleFunc("/power", a.powerHandler)
-	http.HandleFunc("/function", a.functionHandler)
-	http.HandleFunc("/speed", a.speedDirectionHandler)
-	http.HandleFunc("/stop", a.stopHandler)
-	http.Handle("/", http.FileServer(http.Dir("./ui/web/assets")))
+	a.router.Get("/power", a.powerHandler)
+
+	a.router.Get("/{address:[0-9]+}/function", a.functionHandler)
+	a.router.Get("/{address:[0-9]+}/speed", a.speedDirectionHandler)
+	a.router.Get("/{address:[0-9]+}/stop", a.stopHandler)
+	a.router.Get("/power", a.powerHandler)
+
+	assetsDir := http.Dir("./ui/web/assets/")
+	a.router.Handle("/*", http.FileServer(assetsDir))
+
 	err := a.httpServer.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("unable to run http server: %s", err.Error())
@@ -53,7 +58,8 @@ type errorResponse struct {
 }
 
 func (a *API) powerHandler(w http.ResponseWriter, r *http.Request) {
-	power, err := a.throt.PowerToggle()
+	// TODO: Power functionality should not belong to a throttle
+	power, err := a.roster.GetThrottle(-1).PowerToggle()
 	if err != nil {
 		log.Printf("unable to toggle power: %q", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -73,6 +79,13 @@ func (a *API) powerHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) functionHandler(w http.ResponseWriter, r *http.Request) {
+	address, err := parseAddress(r)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, err.Error())
+		return
+	}
+
 	functionParam := r.URL.Query().Get("function")
 	function, err := strconv.ParseUint(functionParam, 10, 32)
 	if err != nil {
@@ -82,7 +95,7 @@ func (a *API) functionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	funcValue, err := a.throt.ToggleFunction(uint(function))
+	funcValue, err := a.roster.GetThrottle(address).ToggleFunction(uint(function))
 	if err != nil {
 		log.Printf("failed to toggle function: %q", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -104,8 +117,25 @@ func (a *API) functionHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // TODO: use json requests data instead of parama. simpler code
+// TODO: address middleware
+
+func parseAddress(r *http.Request) (int, error) {
+	addressParam := chi.URLParam(r, "address")
+	address, err := strconv.Atoi(addressParam)
+	if err != nil {
+		return 0, fmt.Errorf("address must be a number: %q", err.Error())
+	}
+	return address, nil
+}
 
 func (a *API) speedDirectionHandler(w http.ResponseWriter, r *http.Request) {
+	address, err := parseAddress(r)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, err.Error())
+		return
+	}
+
 	speedParam := r.URL.Query().Get("speed")
 	speed, err := strconv.Atoi(speedParam)
 	if err != nil {
@@ -116,6 +146,7 @@ func (a *API) speedDirectionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: reuse a lot of this validation logic
 	forwardParam := r.URL.Query().Get("forward")
 	forward, err := strconv.ParseBool(forwardParam)
 	if err != nil {
@@ -128,16 +159,23 @@ func (a *API) speedDirectionHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, fmt.Sprintf("setting speed to: %d, forward direction: %v", speed, forward))
 	if forward {
-		a.throt.DirectionForward()
+		a.roster.GetThrottle(address).DirectionForward()
 	} else {
-		a.throt.DirectionBackward()
+		a.roster.GetThrottle(address).DirectionBackward()
 	}
 
-	a.throt.SetSpeed(speed)
+	a.roster.GetThrottle(address).SetSpeed(speed)
 }
 
 func (a *API) stopHandler(w http.ResponseWriter, r *http.Request) {
-	err := a.throt.Stop()
+	address, err := parseAddress(r)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, err.Error())
+		return
+	}
+
+	err = a.roster.GetThrottle(address).Stop()
 	if err != nil {
 		errorResp := &errorResponse{
 			Error: err.Error(),
@@ -150,5 +188,8 @@ func (a *API) stopHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) Shutdown() error {
-	return a.httpServer.Close()
+	if a.httpServer != nil {
+		return a.httpServer.Close()
+	}
+	return nil
 }
