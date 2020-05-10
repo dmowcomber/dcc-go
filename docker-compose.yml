@@ -1,4 +1,4 @@
-# staying on version 2 until newer version of docker-compose are more accessible on the pi
+# staying on version 2 until newer versions of docker-compose are more accessible on the pi
 version: '2'
 
 services:
