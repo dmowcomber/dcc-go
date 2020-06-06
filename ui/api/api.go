@@ -34,6 +34,7 @@ func (a *API) Run() error {
 	a.router.Get("/{address:[0-9]+}/speed", a.speedDirectionHandler)
 	a.router.Get("/{address:[0-9]+}/stop", a.stopHandler)
 	a.router.Get("/power", a.powerHandler)
+	a.router.Get("/state", a.stateHandler)
 
 	assetsDir := http.Dir("./ui/web/assets/")
 	a.router.Handle("/*", http.FileServer(assetsDir))
