@@ -6,6 +6,13 @@ This repo contains:
 * A DCC Throttle HTTP API
 * A DCC Throttle Web page
 
+# Find Arduino USB device
+```
+ls /dev |egrep 'ttyACM|ttyUSB'
+ttyACM0
+# found /dev/ttyACM0
+```
+
 # Installation
 ## Install binary and run
 ```
@@ -19,9 +26,16 @@ dcc-go
 dcc-go -address=3 -device=/dev/ttyACM0
 ```
 
-## Build docker image and run in docker
+## Build docker image and run using docker-compose or docker
+### docker-compose
 ```
 docker-compose up -d
+```
+
+### docker
+```
+docker build . -t github.com/dmowcomber/dcc-go
+docker run -p 8080:8080 --device /dev/ttyACM0 github.com/dmowcomber/dcc-go
 ```
 
 # Screenshot
