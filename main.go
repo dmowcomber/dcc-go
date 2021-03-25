@@ -47,8 +47,8 @@ func main() {
 	apiServer := api.New(throttleRoster, router, httpServer)
 
 	throt := throttle.New(address, serialWriter)
-	throttleCLI := cli.New(throt)
-	go signalWatcher(throt, apiServer, throttleCLI)
+	throttleCLI := cli.New(throt, throttleRoster)
+	go signalWatcher(throttleRoster, apiServer, throttleCLI)
 
 	// run the cli
 	go throttleCLI.Run()
@@ -62,11 +62,11 @@ func main() {
 
 // signalWatcher waits for a signal (control-c or kill -9).
 // on SIGINT or SIGTERM it shuts everything down.
-func signalWatcher(throt *throttle.Throttle, apiServer *api.API, throttleCLI *cli.CLI) {
+func signalWatcher(rostr *roster.Track, apiServer *api.API, throttleCLI *cli.CLI) {
 	exitCode := 0
 	defer func() {
 		log.Println("powering off throttle")
-		throt.PowerOff()
+		rostr.PowerOff()
 		os.Exit(exitCode)
 	}()
 

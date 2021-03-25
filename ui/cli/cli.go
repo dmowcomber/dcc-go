@@ -3,18 +3,21 @@ package cli
 import (
 	"log"
 
+	"github.com/dmowcomber/dcc-go/roster"
 	"github.com/dmowcomber/dcc-go/throttle"
 	"github.com/eiannone/keyboard"
 )
 
-func New(throt *throttle.Throttle) *CLI {
+func New(throt *throttle.Throttle, rostr *roster.Track) *CLI {
 	return &CLI{
 		throt: throt,
+		rostr: rostr,
 	}
 }
 
 type CLI struct {
 	throt *throttle.Throttle
+	rostr *roster.Track
 }
 
 func (c *CLI) Run() error {
@@ -36,7 +39,7 @@ func (c *CLI) Run() error {
 
 		switch char {
 		case 'p':
-			c.throt.PowerToggle()
+			c.rostr.PowerToggle()
 		case 's':
 			c.throt.Stop()
 		case '0':

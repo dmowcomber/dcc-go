@@ -1,11 +1,17 @@
+const digitRegex = /^\d+$/;
+var functionsCount = 28;
+var speed=0;
+var address=3;
+var directionForward=true;
+
 function addFunctionRows(document) {
-  for (let i = 1; i<=32; i=i+4) {
+  for (let i = 1; i<=functionsCount; i=i+4) {
     if (i == NaN) {
       break;
     }
 
     var functionNumbers = [];
-    for (let j = i; j < i+4 && j<=28; j++) {
+    for (let j = i; j < i+4 && j<=functionsCount; j++) {
       functionNumbers.push(j)
     }
     addFunctionRow(document, functionNumbers);
@@ -29,19 +35,19 @@ function addButton(document, row, number) {
   row.appendChild(buttonContainer);
 
   var button = document.createElement('button');
+  // TODO update the ID to `f%d` instead of just `%d`
   button.setAttribute('id', number);
   button.setAttribute('value', number);
   button.textContent = 'F' + number;
   buttonContainer.appendChild(button);
 }
 
-const digitRegex = /^\d+$/;
-var speed=0;
-var address=3;
-var directionForward=true;
-
 document.addEventListener("keydown", function(e){
+  var previousDirectionForward = directionForward;
+  var previousSpeed = speed;
+
   console.log('key pressed: ' + e.which);
+  // TODO: `which` is deprecated. figure out what to use instead
   if(e.which == 37) {
     // left arrow key
     directionForward = false;
@@ -55,11 +61,26 @@ document.addEventListener("keydown", function(e){
     // down arrow key
     speed--;
   }
-  updateSpeedRequest();
+
+  // if speed or direction changed, update the ui
+  if (previousDirectionForward != directionForward || previousSpeed != speed) {
+    updateSpeedRequest();
+  }
 });
 
 $(document).ready(function(){
+  const urlParams = new URLSearchParams(window.location.search);
+  var addrFromURLParams = urlParams.get('address');
+  if (addrFromURLParams !== null) {
+    // update the global `address` var
+    address = addrFromURLParams;
+    $("#addr-input-box").val(address);
+  }
+
   addFunctionRows(document);
+
+  refreshState();
+  window.setInterval(refreshState, 1000);
 
   var input = "";
   var len = 0;
@@ -75,7 +96,14 @@ $(document).ready(function(){
   $("#addr-input-box").on('change', function(){
     var addrInput = $("#addr-input-box").val();
     console.log('changing address to ' + addrInput);
+    // update the global `address` var
     address = addrInput;
+
+    // clear all active class buttons when address changes, let refresh state do it's thing
+    $('button').removeClass('active');
+
+    // update the browser url to have the address
+    history.pushState({pageID: 'ddc-go ' + addrInput}, 'dcc-go ' + addrInput, '?address=' + addrInput);
   });
   $("button").on('click', function(){
       var button = $(this);
@@ -90,10 +118,10 @@ $(document).ready(function(){
             var json = JSON.parse(data)
             if (json['power'] == true) {
               console.log('power on');
-              button.addClass('active')
+              button.addClass('active');
             } else {
               console.log('power off');
-              button.removeClass('active')
+              button.removeClass('active');
             }
           },
           error: function(error){
@@ -173,4 +201,78 @@ function updateSpeedRequest() {
       console.log("error: " + JSON.stringify(error));
     }
   });
+}
+
+function refreshState() {
+  $.ajax({
+    url: 'http://10.0.1.121:8080/state',
+    success: function(data){
+      var json = JSON.parse(data);
+
+      // power is not throttle specific since it appplies to the whole track
+      // update power first, then check for throttle address specific state.
+      var power = json.power || false;
+      if (power) {
+        activeButton('power');
+      } else {
+        inactiveButton('power');
+      }
+
+      json.throttles = json.throttles || {};
+      if(typeof json.throttles[address] === 'undefined') {
+        activeButton('stop');
+        return;
+      }
+
+      // update the global `speed` var
+      speed = json.throttles[address].speed || 0;
+      $("#speed-input-box").val(speed);
+      if (speed == 0) {
+        activeButton('stop');
+      } else {
+        inactiveButton('stop');
+      }
+
+      var direction = json.throttles[address].direction || 0;
+      // update the global `directionForward` var
+      directionForward = (direction == 1);
+      if (directionForward) {
+        inactiveButton('backward');
+        activeButton('forward');
+      } else {
+        inactiveButton('forward');
+        activeButton('backward');
+      }
+
+      // update functions states
+      var functions = json.throttles[address].functions || {};
+      for (let i = 0; i<=functionsCount; i++) {
+        var functionEnabled = functions[i] || false;
+        if (functionEnabled) {
+          activeButton(i);
+        } else {
+          inactiveButton(i);
+        }
+      }
+    },
+    error: function(error){
+      console.log("error on fetch state: " + JSON.stringify(error));
+    }
+  });
+}
+
+function activeButton(id) {
+  var button = $("button#" + id);
+  if (!button.hasClass('active')) {
+    console.log("setting " + id + " to active");
+    button.addClass('active');
+  }
+}
+
+function inactiveButton(id) {
+  var button = $("button#" + id);
+  if (button.hasClass('active')) {
+    console.log("setting " + id + " to inactive");
+    button.removeClass('active');
+  }
 }

@@ -14,7 +14,6 @@ type Throttle struct {
 	address int
 
 	mu        sync.Mutex
-	power     bool
 	functions map[uint]bool
 	speed     int
 	direction int
@@ -40,34 +39,6 @@ func (t *Throttle) Reset() error {
 	t.speed = 0
 	t.direction = 1
 	return t.writeSpeedAndDirection()
-}
-
-func (t *Throttle) PowerToggle() (bool, error) {
-	t.mu.Lock()
-	power := t.power
-	t.mu.Unlock()
-
-	if power {
-		return false, t.PowerOff()
-	}
-	return true, t.PowerOn()
-}
-
-func (t *Throttle) PowerOn() error {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	t.power = true
-	return t.writeString("<1>")
-}
-
-func (t *Throttle) PowerOff() error {
-	t.mu.Lock()
-	t.power = false
-	t.mu.Unlock()
-
-	t.Reset()
-	return t.writeString("<0>")
 }
 
 func (t *Throttle) DirectionForward() error {

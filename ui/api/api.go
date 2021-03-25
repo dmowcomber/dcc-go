@@ -12,12 +12,12 @@ import (
 )
 
 type API struct {
-	roster     *roster.Roster
+	roster     *roster.Track
 	router     chi.Router
 	httpServer *http.Server
 }
 
-func New(roster *roster.Roster, router chi.Router, httpServer *http.Server) *API {
+func New(roster *roster.Track, router chi.Router, httpServer *http.Server) *API {
 	return &API{
 		roster:     roster,
 		router:     router,
@@ -25,11 +25,7 @@ func New(roster *roster.Roster, router chi.Router, httpServer *http.Server) *API
 	}
 }
 
-const defaultLocomotiveAddress = 3
-
 func (a *API) Run() error {
-	a.router.Get("/power", a.powerHandler)
-
 	a.router.Get("/{address:[0-9]+}/function", a.functionHandler)
 	a.router.Get("/{address:[0-9]+}/speed", a.speedDirectionHandler)
 	a.router.Get("/{address:[0-9]+}/stop", a.stopHandler)
@@ -59,12 +55,11 @@ type errorResponse struct {
 }
 
 func (a *API) powerHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: Power functionality should not belong to a throttle
-	power, err := a.roster.GetThrottle(-1).PowerToggle()
+	power, err := a.roster.PowerToggle()
 	if err != nil {
 		log.Printf("unable to toggle power: %q", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, fmt.Sprintf("faile to toggle power: %q", err.Error()))
+		fmt.Fprintf(w, "faile to toggle power: %q", err.Error())
 		return
 	}
 
