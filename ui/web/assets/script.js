@@ -37,6 +37,7 @@ function addButton(document, row, number) {
 
 const digitRegex = /^\d+$/;
 var speed=0;
+var address=3;
 var directionForward=true;
 
 document.addEventListener("keydown", function(e){
@@ -71,6 +72,11 @@ $(document).ready(function(){
     speed = speedInput;
     updateSpeedRequest();
   });
+  $("#addr-input-box").on('change', function(){
+    var addrInput = $("#addr-input-box").val();
+    console.log('changing address to ' + addrInput);
+    address = addrInput;
+  });
   $("button").on('click', function(){
       var button = $(this);
       curr = button.attr("value");
@@ -96,9 +102,10 @@ $(document).ready(function(){
         });
       } else if (curr == 'stop') {
         speed = 0;
+        $("#stop").addClass('active');
         $("#speed-input-box").val('0');
         $.ajax({
-          url: 'http://10.0.1.121:8080/stop',
+          url: 'http://10.0.1.121:8080/'+address+'/stop',
           success: function(data){
             console.log(JSON.stringify(data));
           },
@@ -120,7 +127,7 @@ $(document).ready(function(){
       } else if (curr.match(digitRegex)) {
         console.log(curr + " is a number");
         $.ajax({
-          url: 'http://10.0.1.121:8080/function?function=' + curr,
+          url: 'http://10.0.1.121:8080/'+address+'/function?function=' + curr,
           success: function(data){
             console.log(JSON.stringify(data));
             var json = JSON.parse(data)
@@ -142,8 +149,10 @@ $(document).ready(function(){
 });
 
 function updateSpeedRequest() {
-  if (speed < 0) {
+  $("#stop").removeClass('active');
+  if (speed <= 0) {
     speed = 0;
+    $("#stop").addClass('active');
   }
   $("#speed-input-box").val(speed);
 
@@ -156,7 +165,7 @@ function updateSpeedRequest() {
   }
 
   $.ajax({
-    url: 'http://10.0.1.121:8080/speed?forward=' + directionForward + '&speed=' + speed,
+    url: 'http://10.0.1.121:8080/'+address+'/speed?forward=' + directionForward + '&speed=' + speed,
     success: function(data){
       console.log(JSON.stringify(data));
     },

@@ -1,11 +1,13 @@
+# staying on version 2 until newer versions of docker-compose are more accessible on the pi
 version: '2'
+
 services:
   dcc-go:
     build: .
-    network_mode: "host"
     restart: always
-    
+    ports:
+      - "8080:8080"
     # needed to access the usb device
-    privileged: true
-    volumes:
+    devices:
       - "/dev/ttyACM0:/dev/ttyACM0"
+
