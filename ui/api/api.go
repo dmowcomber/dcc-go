@@ -7,19 +7,19 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/dmowcomber/dcc-go/roster"
+	"github.com/dmowcomber/dcc-go/rail"
 	"github.com/go-chi/chi"
 )
 
 type API struct {
-	roster     *roster.Track
+	track      *rail.Track
 	router     chi.Router
 	httpServer *http.Server
 }
 
-func New(roster *roster.Track, router chi.Router, httpServer *http.Server) *API {
+func New(track *rail.Track, router chi.Router, httpServer *http.Server) *API {
 	return &API{
-		roster:     roster,
+		track:      track,
 		router:     router,
 		httpServer: httpServer,
 	}
@@ -55,7 +55,7 @@ type errorResponse struct {
 }
 
 func (a *API) powerHandler(w http.ResponseWriter, r *http.Request) {
-	power, err := a.roster.PowerToggle()
+	power, err := a.track.PowerToggle()
 	if err != nil {
 		log.Printf("unable to toggle power: %q", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -91,7 +91,7 @@ func (a *API) functionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	funcValue, err := a.roster.GetThrottle(address).ToggleFunction(uint(function))
+	funcValue, err := a.track.GetThrottle(address).ToggleFunction(uint(function))
 	if err != nil {
 		log.Printf("failed to toggle function: %q", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -155,12 +155,12 @@ func (a *API) speedDirectionHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, fmt.Sprintf("setting speed to: %d, forward direction: %v", speed, forward))
 	if forward {
-		a.roster.GetThrottle(address).DirectionForward()
+		a.track.GetThrottle(address).DirectionForward()
 	} else {
-		a.roster.GetThrottle(address).DirectionBackward()
+		a.track.GetThrottle(address).DirectionBackward()
 	}
 
-	a.roster.GetThrottle(address).SetSpeed(speed)
+	a.track.GetThrottle(address).SetSpeed(speed)
 }
 
 func (a *API) stopHandler(w http.ResponseWriter, r *http.Request) {
@@ -171,7 +171,7 @@ func (a *API) stopHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = a.roster.GetThrottle(address).Stop()
+	err = a.track.GetThrottle(address).Stop()
 	if err != nil {
 		errorResp := &errorResponse{
 			Error: err.Error(),

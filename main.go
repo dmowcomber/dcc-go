@@ -9,7 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/dmowcomber/dcc-go/roster"
+	"github.com/dmowcomber/dcc-go/rail"
 	"github.com/dmowcomber/dcc-go/throttle"
 	"github.com/dmowcomber/dcc-go/ui/api"
 	"github.com/dmowcomber/dcc-go/ui/cli"
@@ -43,12 +43,12 @@ func main() {
 	addr := fmt.Sprintf(":%d", port)
 	httpServer := &http.Server{Addr: addr, Handler: router}
 
-	throttleRoster := roster.New(serialWriter)
-	apiServer := api.New(throttleRoster, router, httpServer)
+	track := rail.NewTrack(serialWriter)
+	apiServer := api.New(track, router, httpServer)
 
 	throt := throttle.New(address, serialWriter)
-	throttleCLI := cli.New(throt, throttleRoster)
-	go signalWatcher(throttleRoster, apiServer, throttleCLI)
+	throttleCLI := cli.New(throt, track)
+	go signalWatcher(track, apiServer, throttleCLI)
 
 	// run the cli
 	go throttleCLI.Run()
@@ -62,11 +62,11 @@ func main() {
 
 // signalWatcher waits for a signal (control-c or kill -9).
 // on SIGINT or SIGTERM it shuts everything down.
-func signalWatcher(rostr *roster.Track, apiServer *api.API, throttleCLI *cli.CLI) {
+func signalWatcher(track *rail.Track, apiServer *api.API, throttleCLI *cli.CLI) {
 	exitCode := 0
 	defer func() {
 		log.Println("powering off throttle")
-		rostr.PowerOff()
+		track.PowerOff()
 		os.Exit(exitCode)
 	}()
 

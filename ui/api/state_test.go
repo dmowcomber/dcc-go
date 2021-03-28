@@ -4,20 +4,20 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/dmowcomber/dcc-go/roster"
+	"github.com/dmowcomber/dcc-go/rail"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestStateHandlerDefaultState(t *testing.T) {
 	req := &http.Request{}
 	rw := &fakeResponseWriter{}
-	rostr := roster.New(&noopReaderWriter{})
+	track := rail.NewTrack(&noopReaderWriter{})
 	// create new addresses
-	rostr.GetThrottle(3)
-	rostr.GetThrottle(42)
+	track.GetThrottle(3)
+	track.GetThrottle(42)
 
 	api := &API{
-		roster: rostr,
+		track: track,
 	}
 	api.stateHandler(rw, req)
 
@@ -46,19 +46,19 @@ func TestStateHandlerDefaultState(t *testing.T) {
 func TestStateHandler(t *testing.T) {
 	req := &http.Request{}
 	rw := &fakeResponseWriter{}
-	rostr := roster.New(&noopReaderWriter{})
+	track := rail.NewTrack(&noopReaderWriter{})
 	api := &API{
-		roster: rostr,
+		track: track,
 	}
-	rostr.PowerOn()
+	track.PowerOn()
 
-	throt3 := rostr.GetThrottle(3)
+	throt3 := track.GetThrottle(3)
 	throt3.ToggleFunction(4)
 	throt3.ToggleFunction(28)
 	throt3.SetSpeed(6)
 	throt3.DirectionForward()
 
-	throt42 := rostr.GetThrottle(42)
+	throt42 := track.GetThrottle(42)
 	throt42.DirectionBackward()
 
 	api.stateHandler(rw, req)
@@ -91,9 +91,9 @@ func TestStateHandler(t *testing.T) {
 func TestStateHandlerNoThrottles(t *testing.T) {
 	req := &http.Request{}
 	rw := &fakeResponseWriter{}
-	rostr := roster.New(&noopReaderWriter{})
+	track := rail.NewTrack(&noopReaderWriter{})
 	api := &API{
-		roster: rostr,
+		track: track,
 	}
 	api.stateHandler(rw, req)
 

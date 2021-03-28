@@ -9,14 +9,15 @@ import (
 )
 
 func (a *API) stateHandler(w http.ResponseWriter, r *http.Request) {
-	addrs := a.roster.GetAddresses()
+	// TODO: add optional address param to reduce the payload size? or add a new path with address in it
+	addrs := a.track.GetAddresses()
 	resp := &stateResponse{
-		Power:     a.roster.IsPowerOn(),
+		Power:     a.track.IsPowerOn(),
 		Throttles: make(map[int]throttle.State, len(addrs)),
 	}
 
 	for _, address := range addrs {
-		throt := a.roster.GetThrottle(address)
+		throt := a.track.GetThrottle(address)
 		resp.Throttles[address] = throt.State()
 	}
 	data, err := json.Marshal(resp)
