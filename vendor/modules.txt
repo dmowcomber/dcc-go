@@ -8,6 +8,7 @@ github.com/go-chi/chi
 github.com/pmezard/go-difflib/difflib
 # github.com/stretchr/testify v1.5.1
 github.com/stretchr/testify/assert
+github.com/stretchr/testify/require
 # github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
 github.com/tarm/serial
 # golang.org/x/sys v0.0.0-20200331124033-c3d80250170d

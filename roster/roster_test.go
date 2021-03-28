@@ -6,23 +6,44 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRoster(t *testing.T) {
-	r := New(&fakeReadWriter{})
-	throttle3 := r.GetThrottle(3)
+func TestTrackThrottles(t *testing.T) {
+	track := New(&fakeReaderWriter{})
+	throttle3 := track.GetThrottle(3)
 	assert.NotNil(t, throttle3)
-	throttle42 := r.GetThrottle(42)
+	throttle42 := track.GetThrottle(42)
 	assert.NotNil(t, throttle42)
 
-	addresses := r.GetAddresses()
+	addresses := track.GetAddresses()
 	assert.Equal(t, []int{3, 42}, addresses)
 }
 
-type fakeReadWriter struct{}
+func TestTrackPower(t *testing.T) {
+	readerWriter := &fakeReaderWriter{}
+	track := New(readerWriter)
 
-func (f *fakeReadWriter) Read(p []byte) (n int, err error) {
+	track.PowerOn()
+	assert.Equal(t, "<1>", string(readerWriter.writtenBytes))
+
+	track.PowerOff()
+	assert.Equal(t, "<0>", string(readerWriter.writtenBytes))
+
+	track.PowerToggle()
+	assert.Equal(t, "<1>", string(readerWriter.writtenBytes))
+
+	track.PowerToggle()
+	assert.Equal(t, "<0>", string(readerWriter.writtenBytes))
+}
+
+type fakeReaderWriter struct {
+	writeErr     error
+	writtenBytes []byte
+}
+
+func (f *fakeReaderWriter) Read(b []byte) (int, error) {
 	return 0, nil
 }
 
-func (f *fakeReadWriter) Write(p []byte) (n int, err error) {
-	return 0, nil
+func (f *fakeReaderWriter) Write(b []byte) (int, error) {
+	f.writtenBytes = b
+	return 0, f.writeErr
 }
