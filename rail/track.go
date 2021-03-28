@@ -17,7 +17,7 @@ type Track struct {
 	roster map[int]*throttle.Throttle
 }
 
-// NewTrack returns a new Roster
+// NewTrack returns a new Track
 func NewTrack(serial io.ReadWriter) *Track {
 	return &Track{
 		serial: serial,
