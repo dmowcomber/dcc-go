@@ -1,6 +1,4 @@
-package roster
-
-// TODO: rename package to track or rail
+package rail
 
 import (
 	"io"
@@ -19,8 +17,8 @@ type Track struct {
 	roster map[int]*throttle.Throttle
 }
 
-// New returns a new Roster
-func New(serial io.ReadWriter) *Track {
+// NewTrack returns a new Roster
+func NewTrack(serial io.ReadWriter) *Track {
 	return &Track{
 		serial: serial,
 		mu:     &sync.Mutex{},
