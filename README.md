@@ -31,6 +31,13 @@ dcc-go -address=3 -device=/dev/ttyACM0
 ```
 docker-compose up -d
 ```
+After making changes or pulling latest you'll need to rebuild and restart the service:
+```
+docker-compose build
+docker-compose kill
+docker-compose rm -f
+docker-compose up -d
+```
 
 ### docker
 ```
