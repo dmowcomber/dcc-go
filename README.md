@@ -1,5 +1,5 @@
 # dcc-go
-A DCC Throttle to control model trains. Inspired by [DCCute](https://github.com/deltaray/DCCute)
+A DCC (Digital Command Control) Throttle to control model trains. Inspired by [DCCute](https://github.com/deltaray/DCCute)
 
 This repo contains:
 * A Golang DCC Throttle library [github.com/dmowcomber/dcc-go/throttle](http://github.com/dmowcomber/dcc-go/blob/master/throttle/throttle.go)
