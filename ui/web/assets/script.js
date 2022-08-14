@@ -6,6 +6,17 @@ var directionForward=true;
 var hostname = window.location.hostname;
 console.log('api host: ' + hostname);
 
+function loadScript(url)
+{
+    var head = document.getElementsByTagName('head')[0];
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = url;
+    head.appendChild(script);
+}
+
+loadScript('/js/jquery-1.7.min.js');
+
 function addFunctionRows(document) {
   for (let i = 1; i<=functionsCount; i=i+4) {
     if (i == NaN) {
@@ -83,6 +94,7 @@ $(document).ready(function(){
 
   refreshState();
   window.setInterval(refreshState, 1000);
+  window.setInterval(refreshDebug, 1000);
 
   var input = "";
   var len = 0;
@@ -107,6 +119,7 @@ $(document).ready(function(){
     // update the browser url to have the address
     history.pushState({pageID: 'ddc-go ' + addrInput}, 'dcc-go ' + addrInput, '?address=' + addrInput);
   });
+
   $("button").on('click', function(){
       var button = $(this);
       curr = button.attr("value");
@@ -259,6 +272,27 @@ function refreshState() {
     },
     error: function(error){
       console.log("error on fetch state: " + JSON.stringify(error));
+    }
+  });
+}
+
+function refreshDebug() {
+  var debugDiv = document.getElementById('debug');
+
+  $.ajax({
+    url: 'http://' + hostname + ':8080/metrics',
+    success: function(data){
+      result = '';
+      var dataItem = data.split('\n');
+      for (var j = 0; j < dataItem.length; j++) {
+      match = dataItem[j].match(/inflight_http_reqeusts\{.*/gm);
+      if (!match) { continue; }
+        result = result + match + "<br>";
+      }
+      debugDiv.innerHTML = result;
+    },
+    error: function(error){
+      debugDiv.innerHTML = JSON.stringify(error);
     }
   });
 }
