@@ -9,6 +9,8 @@ import (
 
 	"github.com/dmowcomber/dcc-go/rail"
 	"github.com/go-chi/chi"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type API struct {
@@ -25,13 +27,41 @@ func New(track *rail.Track, router chi.Router, httpServer *http.Server) *API {
 	}
 }
 
-func (a *API) Run() error {
-	a.router.Get("/{address:[0-9]+}/function", a.functionHandler)
-	a.router.Get("/{address:[0-9]+}/speed", a.speedDirectionHandler)
-	a.router.Get("/{address:[0-9]+}/stop", a.stopHandler)
-	a.router.Get("/power", a.powerHandler)
-	a.router.Get("/state", a.stateHandler)
+var inflightRequests *prometheus.GaugeVec
 
+func init() {
+	inflightRequests = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "inflight_http_reqeusts",
+	}, []string{"endpoint"})
+	prometheus.MustRegister(inflightRequests)
+
+}
+
+func metricsHandler(rw http.ResponseWriter, req *http.Request) {
+	promhttp.Handler().ServeHTTP(rw, req)
+}
+
+func (a *API) Run() error {
+
+	// api group
+	a.router.Group(func(r chi.Router) {
+		r.Use(func(next http.Handler) http.Handler {
+			handler := func(w http.ResponseWriter, r *http.Request) {
+				inflightRequests.WithLabelValues(r.URL.Path).Inc()
+				defer inflightRequests.WithLabelValues(r.URL.Path).Dec()
+				next.ServeHTTP(w, r)
+			}
+			return http.HandlerFunc(handler)
+		})
+		r.Get("/metrics", metricsHandler)
+		r.Get("/{address:[0-9]+}/function", a.functionHandler)
+		r.Get("/{address:[0-9]+}/speed", a.speedDirectionHandler)
+		r.Get("/{address:[0-9]+}/stop", a.stopHandler)
+		r.Get("/power", a.powerHandler)
+		r.Get("/state", a.stateHandler)
+	})
+
+	// web ui routes
 	assetsDir := http.Dir("./ui/web/assets/")
 	a.router.Handle("/*", http.FileServer(assetsDir))
 

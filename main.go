@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/dmowcomber/dcc-go/rail"
 	"github.com/dmowcomber/dcc-go/throttle"
@@ -31,7 +32,11 @@ func main() {
 
 	log.Printf("connecting to %s\n", device)
 	log.Printf("locomotive address %d\n", address)
-	serialConfig := &serial.Config{Name: device, Baud: 115200}
+	serialConfig := &serial.Config{
+		Name:        device,
+		Baud:        115200,
+		ReadTimeout: 1 * time.Second,
+	}
 	serialWriter, err := serial.OpenPort(serialConfig)
 	if err != nil {
 		log.Fatal(err)
@@ -41,7 +46,12 @@ func main() {
 	port := 8080
 	router := chi.NewRouter()
 	addr := fmt.Sprintf(":%d", port)
-	httpServer := &http.Server{Addr: addr, Handler: router}
+	httpServer := &http.Server{
+		Addr:         addr,
+		Handler:      router,
+		WriteTimeout: 500 * time.Millisecond,
+		ReadTimeout:  1 * time.Second,
+	}
 
 	track := rail.NewTrack(serialWriter)
 	apiServer := api.New(track, router, httpServer)
