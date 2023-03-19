@@ -5,9 +5,21 @@ import (
 	"log"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/dmowcomber/dcc-go/throttle"
+	"github.com/prometheus/client_golang/prometheus"
 )
+
+var serialWriteLatency prometheus.Histogram
+
+func init() {
+	serialWriteLatency = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "serial_write_latency",
+		Buckets: []float64{.005, .05, .1, .5, 1, 2, 3, 4, 5, 10, 30, 60},
+	})
+	prometheus.MustRegister(serialWriteLatency)
+}
 
 // Track controls power to the track and holds each of the throttles
 type Track struct {
@@ -97,6 +109,10 @@ func (t *Track) writeString(s string) error {
 }
 
 func (t *Track) write(data []byte) error {
+	start := time.Now()
+	defer func() {
+		serialWriteLatency.Observe(time.Since(start).Seconds())
+	}()
 	log.Printf("writing data: %s\n", data)
 	_, err := t.serial.Write(data)
 	if err != nil {
