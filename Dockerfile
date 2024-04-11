@@ -1,4 +1,4 @@
-FROM golang:1.19.7-alpine3.17
+FROM golang:1.22.2-alpine3.19
 
 WORKDIR /go/src/github.com/dmowcomber/dcc-go
 COPY . /go/src/github.com/dmowcomber/dcc-go

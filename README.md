@@ -47,6 +47,18 @@ docker build . -t github.com/dmowcomber/dcc-go
 docker run -p 8080:8080 --device /dev/ttyACM0 github.com/dmowcomber/dcc-go
 ```
 
+### local UI/API testing with a virtual device
+You can test out the UI and API against a virtual device which can be useful if you don't have an actually a DCC++ or DCC-EX Arduino connected but you'd still like to test the integration between the UI and the API.
+
+Create a virtual device using a local file: ./testdev
+```
+socat -d -d -4 PTY,link="./testdev",raw,echo=0 STDIO
+```
+In a separate terminal, run dcc-go
+```
+go run . -device $(readlink ./testdev)
+```
+
 # Screenshot
 ![GitHub Logo](/screenshot.png)
 
