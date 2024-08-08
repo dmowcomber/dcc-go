@@ -14,7 +14,7 @@ import (
 	"github.com/dmowcomber/dcc-go/throttle"
 	"github.com/dmowcomber/dcc-go/ui/api"
 	"github.com/dmowcomber/dcc-go/ui/cli"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/tarm/serial"
 )
 
