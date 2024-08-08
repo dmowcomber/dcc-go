@@ -11,7 +11,8 @@ import (
 func TestStateHandlerDefaultState(t *testing.T) {
 	req := &http.Request{}
 	rw := &fakeResponseWriter{}
-	track := rail.NewTrack(&noopReaderWriter{})
+	track := rail.New()
+	track.SetWriter(&noopReaderWriter{})
 	// create new addresses
 	track.GetThrottle(3)
 	track.GetThrottle(42)
@@ -46,7 +47,8 @@ func TestStateHandlerDefaultState(t *testing.T) {
 func TestStateHandler(t *testing.T) {
 	req := &http.Request{}
 	rw := &fakeResponseWriter{}
-	track := rail.NewTrack(&noopReaderWriter{})
+	track := rail.New()
+	track.SetWriter(&noopReaderWriter{})
 	api := &API{
 		track: track,
 	}
@@ -91,7 +93,8 @@ func TestStateHandler(t *testing.T) {
 func TestStateHandlerNoThrottles(t *testing.T) {
 	req := &http.Request{}
 	rw := &fakeResponseWriter{}
-	track := rail.NewTrack(&noopReaderWriter{})
+	track := rail.New()
+	track.SetWriter(&noopReaderWriter{})
 	api := &API{
 		track: track,
 	}

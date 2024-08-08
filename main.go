@@ -37,10 +37,6 @@ func main() {
 		Baud:        115200,
 		ReadTimeout: 1 * time.Second,
 	}
-	serialWriter, err := serial.OpenPort(serialConfig)
-	if err != nil {
-		log.Fatal(err)
-	}
 	log.Println("connected")
 
 	port := 8080
@@ -53,18 +49,43 @@ func main() {
 		ReadTimeout:  1 * time.Second,
 	}
 
-	track := rail.NewTrack(serialWriter)
+	track := rail.New()
 	apiServer := api.New(track, router, httpServer)
 
-	throt := throttle.New(address, serialWriter)
+	throt := throttle.New(address)
 	throttleCLI := cli.New(throt, track)
+
+	go func() {
+		log.Println("initializing serial writter")
+		var lastErr error
+
+		ticker := time.NewTicker(500 * time.Millisecond)
+		go func() {
+			for range ticker.C {
+				serialWriter, err := serial.OpenPort(serialConfig)
+				if err != nil {
+					if lastErr == nil || err.Error() != lastErr.Error() {
+						log.Printf("failed to initialize serial writer: %s", err.Error())
+						log.Println("silently retrying to initializes serial writter")
+						lastErr = err
+					}
+					continue
+				}
+				track.SetWriter(serialWriter)
+				throt.SetWriter(serialWriter)
+				log.Println("successfully initialized serial writter")
+				return
+			}
+		}()
+	}()
+
 	go signalWatcher(track, apiServer, throttleCLI)
 
 	// run the cli
 	go throttleCLI.Run()
 
 	// run api server
-	err = apiServer.Run()
+	err := apiServer.Run()
 	if err != nil {
 		log.Fatalf("unable to start the api: %q", err.Error())
 	}

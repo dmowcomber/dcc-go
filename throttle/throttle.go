@@ -1,6 +1,7 @@
 package throttle
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -19,13 +20,16 @@ type Throttle struct {
 	direction int
 }
 
-func New(address int, serial io.ReadWriter) *Throttle {
+func New(address int) *Throttle {
 	return &Throttle{
 		address:   address,
-		serial:    serial,
 		functions: make(map[uint]bool),
 		direction: 1, // start in forward direction
 	}
+}
+
+func (t *Throttle) SetWriter(serial io.ReadWriter) {
+	t.serial = serial
 }
 
 func (t *Throttle) Reset() error {
@@ -43,14 +47,14 @@ func (t *Throttle) Reset() error {
 
 func (t *Throttle) DirectionForward() error {
 	t.mu.Lock()
-	t.mu.Unlock()
+	defer t.mu.Unlock()
 	t.direction = 1
 	return t.writeSpeedAndDirection()
 }
 
 func (t *Throttle) DirectionBackward() error {
 	t.mu.Lock()
-	t.mu.Unlock()
+	defer t.mu.Unlock()
 	t.direction = 0
 	return t.writeSpeedAndDirection()
 }
@@ -150,6 +154,9 @@ func (t *Throttle) writeString(s string) error {
 }
 
 func (t *Throttle) write(data []byte) error {
+	if t.serial == nil {
+		return errors.New("serial writer has not been initialized")
+	}
 	log.Printf("writing data: %s\n", data)
 	_, err := t.serial.Write(data)
 	if err != nil {

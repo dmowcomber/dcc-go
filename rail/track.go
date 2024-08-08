@@ -1,6 +1,7 @@
 package rail
 
 import (
+	"errors"
 	"io"
 	"log"
 	"sort"
@@ -29,13 +30,16 @@ type Track struct {
 	roster map[int]*throttle.Throttle
 }
 
-// NewTrack returns a new Track
-func NewTrack(serial io.ReadWriter) *Track {
+// New returns a new Track
+func New() *Track {
 	return &Track{
-		serial: serial,
 		mu:     &sync.Mutex{},
 		roster: make(map[int]*throttle.Throttle),
 	}
+}
+
+func (t *Track) SetWriter(serial io.ReadWriter) {
+	t.serial = serial
 }
 
 // GetThrottle returns a throttle for a given address.
@@ -46,7 +50,8 @@ func (t *Track) GetThrottle(address int) *throttle.Throttle {
 
 	throt, ok := t.roster[address]
 	if !ok {
-		throt = throttle.New(address, t.serial)
+		throt = throttle.New(address)
+		throt.SetWriter(t.serial)
 		t.roster[address] = throt
 	}
 	return throt
@@ -109,6 +114,9 @@ func (t *Track) writeString(s string) error {
 }
 
 func (t *Track) write(data []byte) error {
+	if t.serial == nil {
+		return errors.New("serial writer has not been initialized")
+	}
 	start := time.Now()
 	defer func() {
 		serialWriteLatency.Observe(time.Since(start).Seconds())

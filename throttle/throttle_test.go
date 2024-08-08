@@ -11,7 +11,8 @@ import (
 func TestThrottleSpeed(t *testing.T) {
 	address := 3
 	readerWriter := &fakeReaderWriter{}
-	throt := New(address, readerWriter)
+	throt := New(address)
+	throt.SetWriter(readerWriter)
 
 	expectedSpeed := 5
 	throt.SetSpeed(expectedSpeed)
@@ -35,7 +36,8 @@ func TestThrottleSpeed(t *testing.T) {
 func TestThrottleIndividualFunctions(t *testing.T) {
 	address := 3
 	readerWriter := &fakeReaderWriter{}
-	throt := New(address, readerWriter)
+	throt := New(address)
+	throt.SetWriter(readerWriter)
 
 	testCases := []struct {
 		function     uint
@@ -84,7 +86,8 @@ func TestThrottleIndividualFunctions(t *testing.T) {
 func TestThrottleAllFunctions(t *testing.T) {
 	address := 3
 	readerWriter := &fakeReaderWriter{}
-	throt := New(address, readerWriter)
+	throt := New(address)
+	throt.SetWriter(readerWriter)
 
 	testCases := []struct {
 		functions    []uint
@@ -110,7 +113,8 @@ func TestThrottleAllFunctions(t *testing.T) {
 }
 
 func TestThrottleInvalidFunction(t *testing.T) {
-	throt := New(3, &fakeReaderWriter{})
+	throt := New(3)
+	throt.SetWriter(&fakeReaderWriter{})
 	_, err := throt.ToggleFunction(29)
 	assert.Error(t, err)
 }
@@ -119,7 +123,8 @@ func TestThrottleWriteError(t *testing.T) {
 	readerWriter := &fakeReaderWriter{
 		writeErr: errors.New("failed to write"),
 	}
-	throt := New(3, readerWriter)
+	throt := New(3)
+	throt.SetWriter(readerWriter)
 	err := throt.SetSpeed(10)
 	assert.Error(t, err)
 }

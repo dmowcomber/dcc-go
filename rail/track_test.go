@@ -7,7 +7,8 @@ import (
 )
 
 func TestTrackThrottles(t *testing.T) {
-	track := NewTrack(&fakeReaderWriter{})
+	track := New()
+	track.SetWriter(&fakeReaderWriter{})
 	throttle3 := track.GetThrottle(3)
 	assert.NotNil(t, throttle3)
 	throttle42 := track.GetThrottle(42)
@@ -19,7 +20,8 @@ func TestTrackThrottles(t *testing.T) {
 
 func TestTrackPower(t *testing.T) {
 	readerWriter := &fakeReaderWriter{}
-	track := NewTrack(readerWriter)
+	track := New()
+	track.SetWriter(readerWriter)
 
 	track.PowerOn()
 	assert.Equal(t, "<1>", string(readerWriter.writtenBytes))
