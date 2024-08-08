@@ -157,7 +157,7 @@ func (t *Throttle) write(data []byte) error {
 	if t.serial == nil {
 		return errors.New("serial writer has not been initialized")
 	}
-	log.Printf("writing data: %s\n", data)
+	// log.Printf("writing data: %s\n", data)
 	_, err := t.serial.Write(data)
 	if err != nil {
 		return err

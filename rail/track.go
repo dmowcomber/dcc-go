@@ -3,7 +3,6 @@ package rail
 import (
 	"errors"
 	"io"
-	"log"
 	"sort"
 	"sync"
 	"time"
@@ -121,7 +120,7 @@ func (t *Track) write(data []byte) error {
 	defer func() {
 		serialWriteLatency.Observe(time.Since(start).Seconds())
 	}()
-	log.Printf("writing data: %s\n", data)
+	// log.Printf("writing data: %s\n", data)
 	_, err := t.serial.Write(data)
 	if err != nil {
 		return err

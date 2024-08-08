@@ -26,9 +26,7 @@ func (a *API) stateHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `{"error":"%s"}`, err.Error())
 		return
 	}
-	fmt.Println(resp)
 	w.WriteHeader(http.StatusOK)
-	fmt.Printf("writing data: %s\n", string(data))
 	w.Write(data)
 }
 
