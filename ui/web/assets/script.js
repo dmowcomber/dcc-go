@@ -93,8 +93,7 @@ $(document).ready(function(){
   addFunctionRows(document);
 
   refreshState();
-  window.setInterval(refreshState, 1000);
-  window.setInterval(refreshDebug, 1000);
+  refreshDebug();
 
   var input = "";
   var len = 0;
@@ -191,6 +190,8 @@ $(document).ready(function(){
    });
 });
 
+var speedReq = null;
+
 function updateSpeedRequest() {
   $("#stop").removeClass('active');
   if (speed <= 0) {
@@ -207,7 +208,11 @@ function updateSpeedRequest() {
     $('#forward').removeClass('active');
   }
 
-  $.ajax({
+  if(speedReq && speedReq.readyState != 4) {
+    speedReq.abort();
+  }
+
+  speedReq = $.ajax({
     url: 'http://' + hostname + ':8080/'+address+'/speed?forward=' + directionForward + '&speed=' + speed,
     success: function(data){
       console.log(JSON.stringify(data));
@@ -221,6 +226,9 @@ function updateSpeedRequest() {
 function refreshState() {
   $.ajax({
     url: 'http://' + hostname + ':8080/state',
+	complete: function() {
+		setTimeout(refreshState, 1000)
+	},
     success: function(data){
       var json = JSON.parse(data);
 
@@ -281,6 +289,9 @@ function refreshDebug() {
 
   $.ajax({
     url: 'http://' + hostname + ':8080/metrics',
+	complete: function() {
+		setTimeout(refreshDebug, 1000)
+	},
     success: function(data){
       result = '';
       var dataItem = data.split('\n');
